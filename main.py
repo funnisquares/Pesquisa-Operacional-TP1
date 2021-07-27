@@ -56,7 +56,6 @@ class Model:
                 [self.tableau[0, -1]],
             )
         ).astype(np.longdouble)
-        print("SOLVING AUX")
         for i, line in enumerate(self.tableau[1:]):
             if line[-1] < 0:
                 self.tableau[i + 1] = -line
@@ -79,10 +78,6 @@ class Model:
             self.tableau, np.s_[-len(self.constraints) - 1 : -1], axis=1
         )
         c = np.delete(c, np.s_[-len(self.constraints) - 1 : -1])
-        print("AUXTAB")
-        print(self.tableau)
-        print("AUXSOL")
-        print(sol)
         opt = round(sol[1], 8)
         # (optimal solution, variables, certificate, first line)
         return opt, sol[2], sol[3], c
@@ -93,7 +88,6 @@ class Model:
             self.aux_sol = self._solve_aux()
             if np.all(self.aux_sol[0] < 0):
                 # Inviavel
-                print("INVIAVEL")
                 return ("inviavel", self.aux_sol[2])
             self.tableau[0] = self.aux_sol[3]
 
@@ -105,6 +99,12 @@ class Model:
 
         while neg_c[0].size:
             neg_c = len(self.constraints) + neg_c[0][0]
+
+            if np.isclose(self.tableau[0, neg_c], 0):
+                self.tableau[0, neg_c] = 0
+                neg_c = np.where(self.tableau[0, len(self.constraints) : -1] < 0)
+                continue
+
             b = self.tableau[1:, -1]
             col = self.tableau[1:, neg_c]
 
@@ -121,7 +121,6 @@ class Model:
                             d[i - len(self.constraints)] = -self.tableau[
                                 np.argmax(col), neg_c
                             ]
-                print("ILIMITADA")
                 d[neg_c - len(self.constraints)] = 1
 
                 return ("ilimitada", self.aux_sol[1], d[:len(self.c)])
@@ -156,7 +155,6 @@ class Model:
 
 
 if __name__ == "__main__":
-    np.set_printoptions(edgeitems=10, linewidth=300, precision=17, suppress=True)
     nconstraints, _ = map(int, re.findall(r"\d+", input()))
     c = np.array(list(map(np.longdouble, re.findall(r"-?\d+", input()))), np.longdouble)
     model = Model()
@@ -180,22 +178,20 @@ if __name__ == "__main__":
         for s in sol[3]:
             out += f"{round(s, 7):.7f} "
         print(out)
+    elif sol[0] == "inviavel":
+        print(sol[0])
+        out = f""
+        for s in sol[1]:
+            out += f"{round(s, 7):.7f} "
+        print(out)
     else:
-        print(sol)
+        print(sol[0])
+        out = f""
+        for s in sol[1]:
+            out += f"{round(s, 7):.7f} "
+        print(out)
 
-#
-#
-# np.set_printoptions(edgeitems=10, linewidth=300, precision=2, suppress=True)
-#
-# model = Model()
-# model.set_objective(np.array([0, 0, 19, -8]))
-# model.add_constraint(np.array([-6, 17, -8, -4]), 11.0)
-# model.add_constraint(np.array([-1, 7, -2, -2]), 5)
-# model.add_constraint(np.array([-8, 9, -8, 15.0]), 13.0)
-# model.add_constraint(np.array([11, 14, 19, -4.0]), 13.0)
-# model.add_constraint(np.array([0, 7, 6, 15.0]), 11.0)
-# model.add_constraint(np.array([-9, -10, -3, 10]), -8.0)
-#
-#
-# print(model.solve(print_tableau=True))
-#
+        out = f""
+        for s in sol[2]:
+            out += f"{round(s, 7):.7f} "
+        print(out)
