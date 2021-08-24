@@ -125,8 +125,11 @@ class Model:
 
 
             ratios = b / col
-
-            pivot = (np.where(ratios == np.amin(ratios[col > 0]))[0][0] + 1, neg_c)
+            min_ratios = np.where(ratios == np.amin(ratios[col > 0]))[0]
+            pivot = (min_ratios[0] + 1, neg_c)
+            if ratios[min_ratios[0]] == 0:
+                # Fiz random, não vou implementar Bland, que eu preciso acabar isso logo
+                pivot = (min_ratios[random.randint(0, len(min_ratios) - 1)] + 1, neg_c)
             self._pivot(*pivot, c)
 
             if print_tableau:
